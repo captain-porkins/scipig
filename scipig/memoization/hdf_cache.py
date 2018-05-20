@@ -7,13 +7,13 @@ Module supporting the caching of pandas objects in a hdf store by use of a decor
 return them.
 HDF structure:
 /meta:
-                                        | pk |
-    func_name |(args, kwargs.items())   | ...|
-              |                         |    |
+                                            | key | added    | 
+    func_name |hash(args, kwargs.items())   | 0   | datetime |
+              |                             | 1   | ...
 
-/primary_keys:
+/key(s):
 
-    returned object from func_name
+    returned object(s) from func_name
 """
 
 __default_store_path = None
@@ -51,10 +51,16 @@ def _input_data(df, store, func_name, *args, **kwargs):
     meta.loc[(func_name, make_arg_hash(*args, **kwargs)), :] = [new_key, datetime.now()]
 
     store['meta'] = meta
-    store[str(new_key)] = df
+
+    try:
+        store[str(new_key)] = df
+    except TypeError:
+        raise TypeError('"hdf_cache" decorator must be used with functions that return objects compatible with '
+                        'pd.HDFStore().put')
 
 
 def _tidy_store(store, size_limit):
+    # while os.path.getsize(store._path) / 1000 > size_limit:
     # ToDo:
     # clean the hdf
     # check size_limit against hdf store size
