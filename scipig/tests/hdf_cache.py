@@ -1,8 +1,9 @@
 import pytest
 from scipig.memoization import hdf_cache
 
+
 # default:
-def test_stored()
+def test_stored():
     hdf_cache()
 
 
