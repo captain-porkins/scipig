@@ -48,15 +48,14 @@ def _input_data(df, store, func_name, *args, **kwargs):
     if new_key != new_key:  # i.e. it's NaN because the meta table is empty
         new_key = 0
 
-    meta.loc[(func_name, make_arg_hash(*args, **kwargs)), :] = [new_key, datetime.now()]
-
-    store['meta'] = meta
-
     try:
         store[str(new_key)] = df
     except TypeError:
         raise TypeError('"hdf_cache" decorator must be used with functions that return objects compatible with '
                         'pd.HDFStore().put')
+    else:
+        meta.loc[(func_name, make_arg_hash(*args, **kwargs)), :] = [new_key, datetime.now()]
+        store['meta'] = meta
 
 
 def _tidy_store(store, size_limit):
@@ -71,6 +70,7 @@ def _tidy_store(store, size_limit):
 def _hdf_cache(store_path, size_limit):
     def decorator(func):
         def decorated_func(*args, **kwargs):
+            # ToDo: use wth a safe hdf store / FSO  -> roll back if exception is raised?
             with pd.HDFStore(path=store_path) as hdf_store:
                 try:
                     meta = hdf_store['meta']
